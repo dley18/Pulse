@@ -4,10 +4,11 @@
   "description": "Pulse server",
   "main": "server.ts",
   "scripts": {
-    "devstart": "nodemon --exec ts-node server.ts",
-    "bulid": "tsc",
+    "devstart": "nodemon --watch . --ext ts --exec \"node --loader ts-node/esm\" server.ts",
+    "build": "tsc",
     "start": "node dist/server.js"
   },
+  "type": "module",
   "author": "dley18",
   "license": "ISC",
   "dependencies": {

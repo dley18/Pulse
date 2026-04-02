@@ -1,4 +1,4 @@
-import type { Request, Response } from "express";
+import type { Request, Response} from "express";
 import express from "express";
 import { getConnection } from "../db/db.js";
 
@@ -9,7 +9,7 @@ router.get("/", async (req: Request, res: Response) => {
     const conn = await getConnection();
     try {
         const result = await conn.query(
-            'SELECT * FROM "CPU" ORDER BY id DESC LIMIT 1'
+            'SELECT * FROM "SNAPSHOTS" ORDER BY id DESC LIMIT 1'
         );
 
         res.status(200).json({
@@ -19,7 +19,7 @@ router.get("/", async (req: Request, res: Response) => {
     } catch (err) {
         res.status(500).json({
             ok: false,
-            error: "Failed to fetch CPU Metrics"
+            error: "Failed to fetch Snapshot"
         });
     } finally {
         conn.release();
@@ -29,23 +29,23 @@ router.get("/", async (req: Request, res: Response) => {
 router.post("/", async (req: Request, res: Response) => {
     const conn = await getConnection();
     try {
-        const { snapshot_id, usage_percent, freq, temp, core_count } = req.body;
+        const { hostname, timestamp } = req.body;
         await conn.query(
             `
-            INSERT INTO "CPU" (snapshot_id, usage_percent, freq, temp, core_count)
-            VALUES ($1, $2, $3, $4, $5)
+            INSERT INTO "SNAPSHOTS" (hostname, timestamp)
+            VALUES ($1, $2)
             `,
-            [snapshot_id, usage_percent, freq, temp, core_count]
+            [hostname, timestamp]
         );
 
         res.status(201).json({
             ok: true,
-            cpu: "Successfully sent CPU metrics"
+            snapshot: "Successfully sent snapshot"
         });
     } catch (err) {
         res.status(500).json({
             ok: false,
-            error: "Failed to send CPU metrics"
+            error: "Failed to send snapshot"
         });
     } finally {
         conn.release();

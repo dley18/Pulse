@@ -26,7 +26,7 @@ const getTableNames = (): Array<string> => {
 const createSnapshotsTable = async (conn: Pool): Promise<void> => {
     await conn.query(`
         CREATE TABLE IF NOT EXISTS "${tableNames.snapshots}" (
-            id INTEGER GENERATED ALWAYS AS IDENTITY PRIMARY KEY,
+            id SERIAL PRIMARY KEY,
             hostname TEXT NOT NULL,
             timestamp TIMESTAMP
         );
@@ -36,12 +36,12 @@ const createSnapshotsTable = async (conn: Pool): Promise<void> => {
 const createBatteryTable = async (conn: Pool): Promise<void> => {
     await conn.query(`
         CREATE TABLE IF NOT EXISTS "${tableNames.battery}" (
-            id INTEGER GENERATED ALWAYS AS IDENTITY PRIMARY KEY,
+            id SERIAL PRIMARY KEY,
             snapshot_id INTEGER,
             percent REAL,
             charging BOOLEAN,
             secs_left INTEGER,
-            FOREIGN KEY (snapshot_id) REFERENCES ${tableNames.snapshots}(id)
+            CONSTRAINT fk_snapshot FOREIGN KEY (snapshot_id) REFERENCES "${tableNames.snapshots}"(id)
         );
     `);
 }
@@ -49,13 +49,13 @@ const createBatteryTable = async (conn: Pool): Promise<void> => {
 const createCpuTable = async (conn: Pool): Promise<void> => {
     await conn.query(`
         CREATE TABLE IF NOT EXISTS "${tableNames.cpu}" (
-            id INTEGER GENERATED ALWAYS AS IDENTITY PRIMARY KEY,
+            id SERIAL PRIMARY KEY,
             snapshot_id INTEGER,
             usage_percent REAL,
             freq REAL,
             temp REAL,
             core_count INTEGER,
-            FOREIGN KEY (snapshot_id) REFERENCES ${tableNames.snapshots}(id)
+            CONSTRAINT fk_snapshot FOREIGN KEY (snapshot_id) REFERENCES "${tableNames.snapshots}"(id)
         );
     `);
 }
@@ -63,14 +63,14 @@ const createCpuTable = async (conn: Pool): Promise<void> => {
 const createDiskTable = async (conn: Pool): Promise<void> => {
     await conn.query(`
         CREATE TABLE IF NOT EXISTS "${tableNames.disk}" (
-            id INTEGER GENERATED ALWAYS AS IDENTITY PRIMARY KEY,
+            id SERIAL PRIMARY KEY,
             snapshot_id INTEGER,
             mountpoint TEXT,
             percent REAL,
             free_GB REAL,
             used_GB REAL,
             total_GB REAL,
-            FOREIGN KEY (snapshot_id) REFERENCES ${tableNames.snapshots}(id)
+            CONSTRAINT fk_snapshot FOREIGN KEY (snapshot_id) REFERENCES "${tableNames.snapshots}"(id)
         );
     `);
 }
@@ -78,7 +78,7 @@ const createDiskTable = async (conn: Pool): Promise<void> => {
 const createGpuTable = async (conn: Pool): Promise<void> => {
     await conn.query(`
         CREATE TABLE IF NOT EXISTS "${tableNames.gpu}" (
-            id INTEGER GENERATED ALWAYS AS IDENTITY PRIMARY KEY,
+            id SERIAL PRIMARY KEY,
             snapshot_id INTEGER,
             gpu_name TEXT,
             utilization REAL,
@@ -86,7 +86,7 @@ const createGpuTable = async (conn: Pool): Promise<void> => {
             vram_used_GB REAL,
             vram_free_GB REAL,
             temp REAL,
-            FOREIGN KEY (snapshot_id) REFERENCES ${tableNames.snapshots}(id)
+            CONSTRAINT fk_snapshot FOREIGN KEY (snapshot_id) REFERENCES "${tableNames.snapshots}"(id)
         );
     `);
 }
@@ -94,12 +94,12 @@ const createGpuTable = async (conn: Pool): Promise<void> => {
 const createMemoryTable = async (conn: Pool): Promise<void> => {
     await conn.query(`
         CREATE TABLE IF NOT EXISTS "${tableNames.memory}" (
-            id INTEGER GENERATED ALWAYS AS IDENTITY PRIMARY KEY,
+            id SERIAL PRIMARY KEY,
             snapshot_id INTEGER,
             ram_percent REAL,
             ram_used_GB REAL,
             ram_total_GB REAL,
-            FOREIGN KEY (snapshot_id) REFERENCES ${tableNames.snapshots}(id)
+            CONSTRAINT fk_snapshot FOREIGN KEY (snapshot_id) REFERENCES "${tableNames.snapshots}"(id)
         );
     `);
 }
@@ -107,9 +107,9 @@ const createMemoryTable = async (conn: Pool): Promise<void> => {
 const createNetworkTable = async (conn: Pool): Promise<void> => {
     await conn.query(`
         CREATE TABLE IF NOT EXISTS "${tableNames.network}" (
-            id INTEGER GENERATED ALWAYS AS IDENTITY PRIMARY KEY,
+            id SERIAL PRIMARY KEY,
             snapshot_id INTEGER,
-            interface TEXT,
+            network_interface TEXT,
             GB_sent REAL,
             GB_recv REAL,
             packets_sent INTEGER,
@@ -117,7 +117,7 @@ const createNetworkTable = async (conn: Pool): Promise<void> => {
             errors_out INTEGER,
             drops_in INTEGER,
             drops_out INTEGER,
-            FOREIGN KEY (snapshot_id) REFERENCES ${tableNames.snapshots}(id)
+            CONSTRAINT fk_snapshot FOREIGN KEY (snapshot_id) REFERENCES "${tableNames.snapshots}"(id)
         );
     `);
 }
@@ -135,22 +135,13 @@ const deleteColumn = async (conn: Pool, tableName: (typeof tableNames)[keyof typ
     `);
 }
 
-module.exports = {
-    createAllDBTables: async (conn: Pool): Promise<void> => {
-        await createBatteryTable(conn);
-        await createCpuTable(conn);
-        await createDiskTable(conn);
-        await createGpuTable(conn);
-        await createMemoryTable(conn);
-        await createNetworkTable(conn);
-    },
-    createBatteryTable,
-    createCpuTable,
-    createDiskTable,
-    createGpuTable,
-    createMemoryTable,
-    createNetworkTable,
-    tableNames,
-    getTableNames
-}
 
+export async function createAllDBTables(conn: Pool): Promise<void> {
+    await createSnapshotsTable(conn);
+    await createBatteryTable(conn);
+    await createCpuTable(conn);
+    await createDiskTable(conn);
+    await createGpuTable(conn);
+    await createMemoryTable(conn);
+    await createNetworkTable(conn);
+};
