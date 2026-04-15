@@ -1,4 +1,5 @@
 import express from "express";
+import cors from "cors";
 import Pool from "pg";
 import dotenv from "dotenv";
 import type { Request, Response, Router } from "express";
@@ -9,6 +10,7 @@ dotenv.config();
 
 const app = express();
 app.use(express.json());
+app.use(cors());
 
 app.set("view engine", "ejs");
 app.set("views", "./views");

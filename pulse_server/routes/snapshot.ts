@@ -30,17 +30,19 @@ router.post("/", async (req: Request, res: Response) => {
     const conn = await getConnection();
     try {
         const { hostname, timestamp } = req.body;
-        await conn.query(
+        const result = await conn.query(
             `
             INSERT INTO "SNAPSHOTS" (hostname, timestamp)
             VALUES ($1, $2)
+            RETURNING id
             `,
             [hostname, timestamp]
         );
 
         res.status(201).json({
             ok: true,
-            snapshot: "Successfully sent snapshot"
+            snapshot: "Successfully sent snapshot",
+            id: result.rows[0].id
         });
     } catch (err) {
         res.status(500).json({
